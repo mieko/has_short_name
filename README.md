@@ -1,7 +1,8 @@
 # has\_short\_name
 
-`has\_short\_name` allows you to abbreviate user's names, hopefully in a culturally sensitive way.
+`has_short_name` allows you to abbreviate user's names, hopefully in a culturally sensitive way.
 
+```ruby
     class User < ActiveRecord::Base
       has_short_name
     end
@@ -12,8 +13,8 @@
     m1.short_name # => "Mike"
 
     m2 = User.create(name: 'Mike Tyson')
-    
-    # Notices that "Mike" is no longer unique 
+
+    # Notices that "Mike" is no longer unique
     m2.short_name # => "Mike T."
 
     # To ease confusion, we'll adjust all "Mikes" to the same level
@@ -27,6 +28,7 @@
 
     # Its bailed trying to be clever.
     User.all.pluck(:short_name) => # ['Mike Owens', 'Mike Tyson', 'Mike Mikerson']
+```
 
 ## Installation
 

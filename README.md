@@ -46,9 +46,11 @@ Or install it yourself as:
 
 ## Usage
 
-  class User < ActiveRecord::Base
-    has_short_name
-  end
+```ruby
+class User < ActiveRecord::Base
+  has_short_name
+end
+```
 
 ## Contributing
 

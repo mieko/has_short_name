@@ -1,6 +1,3 @@
-require_relative "./has_short_name/version"
-
-
 module HasShortName
   class << self
     attr_accessor :rules

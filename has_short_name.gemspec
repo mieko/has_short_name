@@ -1,10 +1,9 @@
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'has_short_name/version'
 
 Gem::Specification.new do |spec|
   spec.name          = "has_short_name"
-  spec.version       = HasShortName::VERSION
+  spec.version       = '0.0.1'
   spec.authors       = ["Mike Owens"]
   spec.email         = ["mike@filespanker.com"]
   spec.description   = "ActiveRecord extension that generates abbreviated short names from names"

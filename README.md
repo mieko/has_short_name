@@ -3,31 +3,31 @@
 `has_short_name` allows you to abbreviate user's names, hopefully in a culturally sensitive way.
 
 ```ruby
-    class User < ActiveRecord::Base
-      has_short_name
-    end
+class User < ActiveRecord::Base
+  has_short_name
+end
 
-    m1 = User.create(name: 'Mike Owens')
+m1 = User.create(name: 'Mike Owens')
 
-    # m1 is unique on first name
-    m1.short_name # => "Mike"
+# m1 is unique on first name
+m1.short_name # => "Mike"
 
-    m2 = User.create(name: 'Mike Tyson')
+m2 = User.create(name: 'Mike Tyson')
 
-    # Notices that "Mike" is no longer unique
-    m2.short_name # => "Mike T."
+# Notices that "Mike" is no longer unique
+m2.short_name # => "Mike T."
 
-    # To ease confusion, we'll adjust all "Mikes" to the same level
-    User.adjust_short_names!
-    m1.short_name # => "Mike O."
-    m2.short_name # => "Mike T."
+# To ease confusion, we'll adjust all "Mikes" to the same level
+User.adjust_short_names!
+m1.short_name # => "Mike O."
+m2.short_name # => "Mike T."
 
-    # Let's make it annoying
-    m3 = User.create(name: 'Mike Mikerson')
-    User.adjust_short_names!
+# Let's make it annoying
+m3 = User.create(name: 'Mike Mikerson')
+User.adjust_short_names!
 
-    # Its bailed trying to be clever.
-    User.all.pluck(:short_name) => # ['Mike Owens', 'Mike Tyson', 'Mike Mikerson']
+# Its bailed trying to be clever.
+User.all.pluck(:short_name) => # ['Mike Owens', 'Mike Tyson', 'Mike Mikerson']
 ```
 
 ## Installation

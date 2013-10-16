@@ -65,6 +65,64 @@ module HasShortName
     def has_short_name
       before_validation :assign_short_name
     end
+
+    def adjust_short_names!(scope: nil)
+      scope ||= self.all
+      scope = scope.to_a
+
+      # Our main structure here is:
+      # { 'Mike' =>  [[user1, candidates1],
+      #               [user2, candidates2]] }
+      name_map = scope.map do |u|
+        [u, u.short_name_candidates]
+      end.group_by do |r|
+        r.last.first
+      end
+
+      loop do
+        adj_map = {}
+        name_map.each do |k, v|
+          if v.size == 1
+            adj_map[k] = v
+          else
+            resolve_conflicts(k, v) do |new_key, urec|
+              adj_map[new_key] ||= []
+              adj_map[new_key].push(urec)
+            end
+          end
+        end
+        name_map = adj_map
+
+        # We're done if each entry is singular, OR unsolvable.
+        done = name_map.find do |k, v|
+          v.size == 1 || v.all? {|u, candidates| candidates.size == 1}
+        end
+
+        break if done
+      end
+
+      # Here, name_map should look something like:
+      # name_map = {'Mike' => [[User(...), [leftover candidates]]]}
+      name_map.each do |k, urecs|
+        urecs.each do |urec|
+          user = urec.first
+          user.update(short_name: k) if user.short_name != k
+        end
+      end
+    end
+
+    private
+    def resolve_conflicts(k, urecs)
+      urecs.each do |user, candidates|
+        fail "empty candidate list" if candidates.empty?
+        fail "conflicted key not first" if candidates.first != k
+        if candidates.size == 1
+          yield [candidates.first, [user, [candidates.first]]]
+        else
+          yield [candidates[1], [user, candidates[1..-1]]]
+        end
+      end
+    end
   end
 
   module Methods
@@ -81,7 +139,9 @@ module HasShortName
 
     private
     def assign_short_name
-      return if short_name.present? && !self.name_changed?
+      if !((new_record? && short_name.blank?) || (! new_record? && name_changed?))
+        return
+      end
 
       scope = self.class.all
       short_name_candidates.each do |candidate|

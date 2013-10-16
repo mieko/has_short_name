@@ -57,7 +57,60 @@ class HasShortNameTest < MiniTest::Unit::TestCase
 
   def test_basic_functionality
     u = User.create!(name: 'Mike Owens')
-    assert_equal "Mike", u.short_name
+    assert_equal 'Mike', u.short_name
   end
 
+  def test_change_name
+    u = User.create!(name: 'Mike Owens')
+    assert_equal 'Mike', u.short_name
+
+    u.update!(name: 'Bobby Bobberson')
+    assert_equal 'Bobby', u.short_name
+  end
+
+  def test_explicit_short_name
+    u = User.create!(name: 'Mike Owens', short_name: 'Miguel')
+    assert_equal "Miguel", u.short_name
+  end
+
+  def test_duplicates
+    u0 = User.create!(name: 'Leah Johnson')
+    u1 = User.create!(name: 'Mike Owens')
+    u2 = User.create!(name: 'Mike Mikerson')
+    assert_equal "Leah", u0.short_name
+    assert_equal "Mike", u1.short_name
+    assert_equal "Mike M.", u2.short_name
+
+    User.adjust_short_names!
+    u0 = User.find_by!(name: 'Leah Johnson')
+    u1 = User.find_by!(name: 'Mike Owens')
+    u2 = User.find_by!(name: 'Mike Mikerson')
+
+    assert_equal "Leah", u0.short_name
+    assert_equal "Mike O.", u1.short_name
+    assert_equal "Mike M.", u2.short_name
+  end
+
+  def test_bailout
+    u1 = User.create!(name: 'Mike Owens')
+    u2 = User.create!(name: 'Mike Otherface')
+    User.adjust_short_names!
+    u1 = User.find_by!(name: 'Mike Owens')
+    u2 = User.find_by!(name: 'Mike Otherface')
+
+    assert_equal "Mike Owens", u1.short_name
+    assert_equal "Mike Otherface", u2.short_name
+  end
+
+  def test_unresolvable
+    u1 = User.create!(name: 'Mike Owens')
+    u2 = User.create!(name: 'Mike Owens')
+    ids = [u1, u2]
+    User.adjust_short_names!
+    u1 = User.find(ids[0])
+    u2 = User.find(ids[1])
+
+    assert_equal "Mike Owens", u1.short_name
+    assert_equal "Mike Owens", u2.short_name
+  end
 end

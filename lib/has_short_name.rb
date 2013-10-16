@@ -115,7 +115,9 @@ module HasShortName
       name_map.each do |k, urecs|
         urecs.each do |urec|
           user = urec.first
-          user.update(short_name: k) if user.short_name != k
+          if @short_name_options[:only].(user)
+            user.update(short_name: k) if user.short_name != k
+          end
         end
       end
     end

@@ -42,6 +42,10 @@ class HasShortNameTest < MiniTest::Unit::TestCase
     end
   end
 
+  def all(model = User)
+    model.all.order(:id).pluck(:short_name)
+  end
+
   def test_hook_was_included
     # On AR models which has_short_name wasn't called, we shouldn't
     # have the ClassMethods mixins
@@ -113,4 +117,27 @@ class HasShortNameTest < MiniTest::Unit::TestCase
     assert_equal "Mike Owens", u1.short_name
     assert_equal "Mike Owens", u2.short_name
   end
+
+  def test_third_level
+    User.create!(name: 'Mike Owens')
+    User.create!(name: 'Mike Mikerson')
+    User.create!(name: 'Mike Miller')
+    User.create!(name: 'Mike Tyson')
+    User.adjust_short_names!
+
+    assert_equal ['Mike O.', 'Mike Mikerson', 'Mike Miller', 'Mike T.'], all
+  end
+
+  def test_mc_replacement
+    User.create!(name: 'Bobby Miller')
+    User.create!(name: 'Bobby McDonald')
+    User.create!(name: 'Bobby McDennis')
+    User.create!(name: 'Bobby MacTrollface')
+    User.create!(name: 'Bobby Bobberson')
+    User.create!(name: 'Bobby')
+    User.adjust_short_names!
+    assert_equal [ 'Bobby M.', 'Bobby McDonald', 'Bobby McDennis',
+                   'Bobby MacT.', 'Bobby B.', 'Bobby'], all
+  end
+
 end

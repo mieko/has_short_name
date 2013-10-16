@@ -170,5 +170,9 @@ class HasShortNameTest < MiniTest::Unit::TestCase
 
     u2 = ManOrMachine.create!(name: 'Lt. Commander Data', human: false)
     assert_equal 'Lt. Commander Data', u2.short_name
+
+    # Make sure it's used properly in batch
+    User.adjust_short_names!
+    assert_equal ['Mike', 'Lt. Commander Data'], all(ManOrMachine)
   end
 end

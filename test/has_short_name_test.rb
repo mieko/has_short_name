@@ -22,12 +22,7 @@ class User < BaseTable
 end
 
 class ManOrMachine < BaseTable
-  attr_accessor :human
   has_short_name only: ->(m) { m.human }
-
-  def after_initialize
-    @human = true if @human.nil?
-  end
 end
 
 class HasShortNameTest < MiniTest::Unit::TestCase
@@ -38,6 +33,7 @@ class HasShortNameTest < MiniTest::Unit::TestCase
           t.column :type, :string
           t.column :name, :string
           t.column :short_name, :string
+          t.column :human, :boolean, null: false, default: true
         end
       end
     end
@@ -165,7 +161,7 @@ class HasShortNameTest < MiniTest::Unit::TestCase
   end
 
   def test_only_predicate
-    u = ManOrMachine.create!(name: 'Mike Owens', human: true)
+    u = ManOrMachine.create!(name: 'Mike Owens')
     assert_equal 'Mike', u.short_name
 
     u2 = ManOrMachine.create!(name: 'Lt. Commander Data', human: false)
@@ -174,5 +170,18 @@ class HasShortNameTest < MiniTest::Unit::TestCase
     # Make sure it's used properly in batch
     User.adjust_short_names!
     assert_equal ['Mike', 'Lt. Commander Data'], all(ManOrMachine)
+  end
+
+  def test_blank_only_adjust
+    ManOrMachine.create!(name: 'Mike Owens')
+    ManOrMachine.create!(name: 'Leah Johnson')
+    ManOrMachine.create!(name: 'Lt. Commander Data', human: false)
+    ManOrMachine.update_all(short_name: nil)
+    assert_equal [true, true, false],ManOrMachine.all.order(:id).pluck(:human)
+
+    ManOrMachine.adjust_short_names!
+
+
+    assert_equal ['Mike', 'Leah', 'Lt. Commander Data'], all(ManOrMachine)
   end
 end

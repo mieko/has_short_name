@@ -40,8 +40,15 @@ module HasShortName
       end
     end,
 
-    first_and_last_initial: -> (name) do
+    first_and_last_initial: -> (name, already_matched) do
+      # This isn't an option if we've already got a McName, because it's
+      # pretty much a special case.
+      if (already_matched & [:mc_abbreviation, :hyphen_abbrev]) != []
+        return nil
+      end
+
       first, mid, last = HasShortName::name_split(name)
+      return nil if last.nil?
       "#{first} #{last.chars.first}."
     end,
 
@@ -127,8 +134,14 @@ module HasShortName
 
   module Methods
     def short_name_candidates
+      # The rules should be in priority order.  As we match,
+      # we keep track of what's already matched and let further
+      # rules opt out if they want.
+      already_matched = []
       after_rules = HasShortName.rules.map do |k, r|
-        r.(name)
+        candidate = (r.arity == 2 ? r.(name, already_matched) : r.(name))
+        already_matched.push(k) if candidate
+        candidate
       end
 
       after_rules.compact!

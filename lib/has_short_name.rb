@@ -101,7 +101,7 @@ module HasShortName
         name_map = adj_map
 
         # We're done if each entry is singular, OR unsolvable.
-        done = name_map.find do |k, v|
+        done = name_map.all? do |k, v|
           v.size == 1 || v.all? {|u, candidates| candidates.size == 1}
         end
 

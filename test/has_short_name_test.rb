@@ -21,6 +21,15 @@ class User < BaseTable
   has_short_name
 end
 
+class ManOrMachine < BaseTable
+  attr_accessor :human
+  has_short_name only: ->(m) { m.human }
+
+  def after_initialize
+    @human = true if @human.nil?
+  end
+end
+
 class HasShortNameTest < MiniTest::Unit::TestCase
   def setup
     capture_io do
@@ -140,4 +149,26 @@ class HasShortNameTest < MiniTest::Unit::TestCase
                    'Bobby MacT.', 'Bobby B.', 'Bobby'], all
   end
 
+
+  def test_updates_with_name
+    u = User.create!(name: 'Mike Owens')
+    assert_equal 'Mike', u.short_name
+
+    u.update! name: 'Bobby Bobberson'
+    assert_equal 'Bobby', u.short_name
+
+    u.update name: 'Mitch Hedberg', short_name: 'Tucson'
+    assert_equal 'Tucson', u.short_name
+
+    u.update name: 'Mike Owens'
+    assert_equal 'Mike', u.short_name
+  end
+
+  def test_only_predicate
+    u = ManOrMachine.create!(name: 'Mike Owens', human: true)
+    assert_equal 'Mike', u.short_name
+
+    u2 = ManOrMachine.create!(name: 'Lt. Commander Data', human: false)
+    assert_equal 'Lt. Commander Data', u2.short_name
+  end
 end

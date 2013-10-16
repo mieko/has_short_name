@@ -69,8 +69,10 @@ module HasShortName
   }
 
   module ClassMethods
-    def has_short_name
+    def has_short_name(only: nil)
       before_validation :assign_short_name
+      @short_name_options ||= {}
+      @short_name_options[:only] = only.nil? ? (->(m) { true }) : only
     end
 
     def adjust_short_names!(scope: nil)
@@ -134,6 +136,11 @@ module HasShortName
 
   module Methods
     def short_name_candidates
+      # For models that fail the predicate, the name is the only
+      # candidate.
+      options = self.class.instance_variable_get(:@short_name_options)
+      return [name] if !options[:only].(self)
+
       # The rules should be in priority order.  As we match,
       # we keep track of what's already matched and let further
       # rules opt out if they want.
@@ -152,7 +159,8 @@ module HasShortName
 
     private
     def assign_short_name
-      if !((new_record? && short_name.blank?) || (! new_record? && name_changed?))
+      if !((new_record? && short_name.blank?) ||
+           (! new_record? && name_changed? && !short_name_changed?))
         return
       end
 
@@ -169,9 +177,9 @@ module HasShortName
   end
 
   module ARHook
-    def has_short_name(*args, **kwargs)
+    def has_short_name(*args, **kw)
       include(HasShortName) unless is_a?(HasShortName)
-      has_short_name(*args)
+      has_short_name(*args, **kw)
     end
   end
 

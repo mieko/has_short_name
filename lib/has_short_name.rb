@@ -22,7 +22,7 @@ module HasShortName
 
     mc_abbreviation: -> (name) do
       first, mid, last = HasShortName::name_split(name)
-      if last.gsub!(/\A(Mac|Mc|O\')(\S).*/i, '\1\2.')
+      if last && last.gsub!(/\A(Mac|Mc|O\')(\S).*/i, '\1\2.')
         "#{first} #{mid} #{last}"
       else
         nil
@@ -31,7 +31,7 @@ module HasShortName
 
     hyphen_abbrev: -> (name) do
       first, mid, last = HasShortName::name_split(name)
-      if last.match(/-/)
+      if last && last.match(/-/)
         parts = last.split(/\s*-\s*/)
         combined = parts.map{|v| v.chars.first}.join('-') + '.'
         "#{first} #{mid} #{combined}"

@@ -25,6 +25,16 @@ class ManOrMachine < BaseTable
   has_short_name only: ->(m) { m.human }
 end
 
+class Usuario < BaseTable
+  has_short_name from: :nombre,
+                 column: :short_nombre
+end
+
+class MultiColumn < BaseTable
+  has_short_name
+  # has_short_name from: :nombre, column: :short_nombre
+end
+
 class HasShortNameTest < MiniTest::Unit::TestCase
   def setup
     capture_io do
@@ -34,6 +44,9 @@ class HasShortNameTest < MiniTest::Unit::TestCase
           t.column :name, :string
           t.column :short_name, :string
           t.column :human, :boolean, null: false, default: true
+
+          t.column :nombre, :string
+          t.column :short_nombre, :string
         end
       end
     end
@@ -175,11 +188,20 @@ class HasShortNameTest < MiniTest::Unit::TestCase
     ManOrMachine.create!(name: 'Leah Johnson')
     ManOrMachine.create!(name: 'Lt. Commander Data', human: false)
     ManOrMachine.update_all(short_name: nil)
-    assert_equal [true, true, false],ManOrMachine.all.order(:id).pluck(:human)
+    assert_equal [true, true, false],
+                 ManOrMachine.all.order(:id).pluck(:human)
 
     ManOrMachine.adjust_short_names!
 
 
     assert_equal ['Mike', 'Leah', 'Lt. Commander Data'], all(ManOrMachine)
+  end
+
+  def test_alternate_column_names
+    Usuario.create!(nombre: 'Miguel Owens')
+    Usuario.create!(nombre: 'Miguel Trollface')
+    Usuario.adjust_short_nombres!
+    assert_equal ['Miguel O.', 'Miguel T.'],
+                 Usuario.all.order(:id).pluck(:short_nombre)
   end
 end

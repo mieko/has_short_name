@@ -2,6 +2,23 @@
 
 `has_short_name` allows you to abbreviate user's names, hopefully in a culturally sensitive way.
 
+
+## Installation
+
+Add this line to your application's Gemfile:
+
+    gem 'has_short_name'
+
+And then execute:
+
+    $ bundle
+
+Or install it yourself as:
+
+    $ gem install has_short_name
+
+## Usage
+
 ```ruby
 class User < ActiveRecord::Base
   has_short_name
@@ -28,28 +45,14 @@ User.adjust_short_names!
 
 # Its bailed trying to be clever.
 User.all.pluck(:short_name) => # ['Mike Owens', 'Mike Tyson', 'Mike Mikerson']
-```
 
-## Installation
-
-Add this line to your application's Gemfile:
-
-    gem 'has_short_name'
-
-And then execute:
-
-    $ bundle
-
-Or install it yourself as:
-
-    $ gem install has_short_name
-
-## Usage
-
-```ruby
-class User < ActiveRecord::Base
-  has_short_name
+# Alternate columns
+class Usuario < BaseTable
+  # Use the 'nombre' column to generate 'short_nombre'
+  has_short_name from:   :nombre,
+                 column: :short_nombre
 end
+
 ```
 
 ## Contributing

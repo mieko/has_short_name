@@ -4,24 +4,24 @@ module HasShortName
   end
 
   private
-  def name_split(s)
+  def split_name(s)
     r = s.split(/\s+/)
     return [r.first, nil, r.last] if r.size == 2
 
     return [r.first, r[1...(r.size - 1)].join(' '), r.last] if r.size > 3
     return r
   end
-  module_function :name_split
+  module_function :split_name
 
   public
   self.rules = {
     just_first: -> (name) do
-      first, *_ = HasShortName::name_split(name)
+      first, *_ = HasShortName::split_name(name)
       first
     end,
 
     mc_abbreviation: -> (name) do
-      first, mid, last = HasShortName::name_split(name)
+      first, mid, last = HasShortName::split_name(name)
       if last && last.gsub!(/\A(Mac|Mc|O\')(\S).*/i, '\1\2.')
         "#{first} #{mid} #{last}"
       else
@@ -30,7 +30,7 @@ module HasShortName
     end,
 
     hyphen_abbrev: -> (name) do
-      first, mid, last = HasShortName::name_split(name)
+      first, mid, last = HasShortName::split_name(name)
       if last && last.match(/-/)
         parts = last.split(/\s*-\s*/)
         combined = parts.map{|v| v.chars.first}.join('-') + '.'
@@ -47,13 +47,13 @@ module HasShortName
         return nil
       end
 
-      first, mid, last = HasShortName::name_split(name)
+      first, mid, last = HasShortName::split_name(name)
       return nil if last.nil?
       "#{first} #{last.chars.first}."
     end,
 
     with_middle_names: -> (name) do
-      first, mid, last = HasShortName::name_split(name)
+      first, mid, last = HasShortName::split_name(name)
       if mid
         mids = mid.split(/\s+/)
         midp = mids.map{|v| v.chars.first + '.'} .join(' ')
@@ -69,10 +69,17 @@ module HasShortName
   }
 
   module ClassMethods
-    def has_short_name(only: nil)
-      options = { only: only.nil? ? (->(m) { true }) : only }
+    def has_short_name(only: nil, from: nil, column: nil)
+      only   ||= ->(m) { true }
+      column ||= :short_name
+      from   ||= :name
 
-      define_singleton_method(:adjust_short_names!) do |scope: nil|
+      # Allow passing in strings
+      column, from = [column, from].map(&:to_sym)
+      plural_column = column.to_s.pluralize
+
+
+      define_singleton_method("adjust_#{plural_column}!") do |scope: nil|
         scope ||= self.all
         scope = scope.to_a
 
@@ -80,7 +87,7 @@ module HasShortName
         # { 'Mike' =>  [[user1, candidates1],
         #               [user2, candidates2]] }
         name_map = scope.map do |u|
-          [u, u.short_name_candidates]
+          [u, u.send("#{column}_candidates")]
         end.group_by do |r|
           r.last.first
         end
@@ -112,10 +119,11 @@ module HasShortName
         name_map.each do |k, urecs|
           urecs.each do |urec|
             user = urec.first
-            user.update(short_name: k) if user.short_name != k
+            user.update(column => k) if user.send(column) != k
           end
         end
       end
+
 
       define_singleton_method(:resolve_conflicts) do |k, urecs, &cb|
         urecs.each do |user, candidates|
@@ -130,10 +138,11 @@ module HasShortName
       end
 
 
-      define_method(:short_name_candidates) do
+      define_method("#{column}_candidates") do
+        name = send(from)
         # For models that fail the predicate, the name is the only
         # candidate.
-        return [name] if !options[:only].(self)
+        return [name] if !only.(self)
 
         # The rules should be in priority order.  As we match,
         # we keep track of what's already matched and let further
@@ -151,24 +160,28 @@ module HasShortName
         after_rules
       end
 
-      define_method(:assign_short_name) do
-        if !((new_record? && short_name.blank?) ||
-             (! new_record? && name_changed? && !short_name_changed?))
+
+      define_method("assign_#{column}") do
+        changed_keys = changed_attributes.keys.map(&:to_sym)
+
+        if !((new_record? && send(column).blank?) ||
+             (! new_record? && changed_keys.include?(from) &&
+              !changed_keys.include?(column)))
           return
         end
 
         scope = self.class.all
-        short_name_candidates.each do |candidate|
-          if (ex = scope.find_by(short_name: candidate)) && ex != self
+        send("#{column}_candidates").each do |candidate|
+          if (ex = scope.find_by(column => candidate)) && ex != self
             next
           else
-            self.short_name = candidate
+            send("#{column}=", candidate)
             break
           end
         end
       end
 
-      before_validation :assign_short_name
+      before_validation "assign_#{column}".to_sym
     end
   end
 

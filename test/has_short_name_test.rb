@@ -32,7 +32,7 @@ end
 
 class MultiColumn < BaseTable
   has_short_name
-  # has_short_name from: :nombre, column: :short_nombre
+  has_short_name from: :nombre, column: :short_nombre
 end
 
 class HasShortNameTest < MiniTest::Unit::TestCase
@@ -60,8 +60,8 @@ class HasShortNameTest < MiniTest::Unit::TestCase
     end
   end
 
-  def all(model = User)
-    model.all.order(:id).pluck(:short_name)
+  def all(model = User, attrib = :short_name)
+    model.all.order(:id).pluck(attrib)
   end
 
   def test_hook_was_included
@@ -201,7 +201,18 @@ class HasShortNameTest < MiniTest::Unit::TestCase
     Usuario.create!(nombre: 'Miguel Owens')
     Usuario.create!(nombre: 'Miguel Trollface')
     Usuario.adjust_short_nombres!
-    assert_equal ['Miguel O.', 'Miguel T.'],
-                 Usuario.all.order(:id).pluck(:short_nombre)
+    assert_equal ['Miguel O.', 'Miguel T.'], all(Usuario, :short_nombre)
+  end
+
+  # These should work independently.
+  def test_multi_column
+    MultiColumn.create(name: 'Mike Owens',      nombre: 'Miguel Owens')
+    MultiColumn.create(name: 'Bobby Bobberson', nombre: 'Roberto Bobberson')
+
+    MultiColumn.adjust_short_names!
+    MultiColumn.adjust_short_nombres!
+
+    assert_equal ['Mike', 'Bobby'],     all(MultiColumn, :short_name)
+    assert_equal ['Miguel', 'Roberto'], all(MultiColumn, :short_nombre)
   end
 end

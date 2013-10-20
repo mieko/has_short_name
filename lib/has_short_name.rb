@@ -96,7 +96,6 @@ module HasShortName
 
       # Handle `only: :predicate?` argument
       if only.is_a?(Symbol)
-        puts "ONLY=#{only.inspect}"
         predicate_symbol = only
         only = ->(m) { m.send(predicate_symbol) }
       end

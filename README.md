@@ -66,12 +66,12 @@ tuples, if you find a reason to do so.
 
 Sometimes you don't want a short name generated, for example, when you have a
 "name" field that can contain a human's name, or a company name.  To prevent
-"Internet Widgets Pty." from being shortened to "Internet" or "Internet W.",
+"Internet Widgets Pty." from being shortened to "Internet" or "Internet P.",
 you'll want something like:
 
 ```ruby
 class User
-  has_short_name only: -> {|u| u.human? }
+  has_short_name only: -> { human? }
 
   # Alternatively:
   # has_short_name only: :human?

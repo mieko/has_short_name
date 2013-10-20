@@ -87,7 +87,7 @@ module HasShortName
 
   module ClassMethods
     def has_short_name(only: nil, from: nil, column: nil, rules: nil)
-      only   ||= ->(m) { true }
+      only   ||= -> { true }
       column ||= :short_name
       from   ||= :name
       rules  ||= HasShortName::DEFAULT_RULES
@@ -96,8 +96,9 @@ module HasShortName
       column, from = [column, from].map(&:to_sym)
       plural_column = column.to_s.pluralize
 
-      # Handle `only: :predicate?` argument
-      only = only.to_proc
+      # Handle `only: :predicate?` argument.  With correct binding via function
+      # invocation.
+      only = ->(sym) { -> { send(sym) } }.(only) if only.is_a?(Symbol)
 
       resolve_conflicts = ->(k, urecs, &cb) do
         urecs.each do |user, candidates|
@@ -161,7 +162,7 @@ module HasShortName
         name = send(from)
         # For models that fail the predicate, the name is the only
         # candidate.
-        return [name] if !only.(self)
+        return [name] unless instance_exec(&only)
 
         # Rules are executed in a special, blank-ish execution environment
         # that has a few utility functions

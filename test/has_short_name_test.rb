@@ -22,7 +22,7 @@ class User < BaseTable
 end
 
 class ManOrMachine < BaseTable
-  has_short_name only: ->(m) { m.human }
+  has_short_name only: ->{ human }
 end
 
 class Usuario < BaseTable

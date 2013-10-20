@@ -1,6 +1,12 @@
 module HasShortName
 
   class RuleExecutionEnvironment < BasicObject
+    attr_reader :already_matched
+
+    def initialize
+      @already_matched = []
+    end
+
     def split_name(s)
       r = s.split(/\s+/)
       return [r.first, nil, r.last] if r.size == 2
@@ -10,12 +16,7 @@ module HasShortName
     end
   end
 
-  class << self
-    attr_accessor :rules
-  end
-
-  public
-  self.rules = {
+  DEFAULT_RULES = {
     just_first: -> (name) do
       first, *_ = split_name(name)
       first
@@ -41,7 +42,7 @@ module HasShortName
       end
     end,
 
-    first_and_last_initial: -> (name, already_matched) do
+    first_and_last_initial: -> (name) do
       # This isn't an option if we've already got a McName, because it's
       # pretty much a special case.
       if (already_matched & [:mc_abbreviation, :hyphen_abbrev]) != []
@@ -70,10 +71,11 @@ module HasShortName
   }
 
   module ClassMethods
-    def has_short_name(only: nil, from: nil, column: nil)
+    def has_short_name(only: nil, from: nil, column: nil, rules: nil)
       only   ||= ->(m) { true }
       column ||= :short_name
       from   ||= :name
+      rules  ||= HasShortName::DEFAULT_RULES
 
       # Allow passing in strings
       column, from = [column, from].map(&:to_sym)
@@ -152,12 +154,9 @@ module HasShortName
         # The rules should be in priority order.  As we match,
         # we keep track of what's already matched and let further
         # rules opt out if they want.
-        already_matched = []
-        after_rules = HasShortName.rules.map do |k, r|
-          args = (r.arity == 2) ? [name, already_matched] : [name]
-          candidate = execution_environment.instance_exec(*args, &r)
-
-          already_matched.push(k) if candidate
+        after_rules = rules.map do |k, r|
+          candidate = execution_environment.instance_exec(name, &r)
+          execution_environment.already_matched.push(k) if candidate
           candidate
         end
 

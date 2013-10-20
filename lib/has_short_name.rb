@@ -95,10 +95,7 @@ module HasShortName
       plural_column = column.to_s.pluralize
 
       # Handle `only: :predicate?` argument
-      if only.is_a?(Symbol)
-        predicate_symbol = only
-        only = ->(m) { m.send(predicate_symbol) }
-      end
+      only = only.to_proc
 
       define_singleton_method("adjust_#{plural_column}!") do |scope: nil|
         scope ||= self.all

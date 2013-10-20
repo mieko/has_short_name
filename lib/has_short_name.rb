@@ -190,9 +190,11 @@ module HasShortName
   end
 end
 
-class << ActiveRecord::Base
-  def has_short_name(*args, **kw)
-    include HasShortName
-    has_short_name(*args, **kw)
+if defined?(ActiveRecord::Base)
+  class << ActiveRecord::Base
+    def has_short_name(*args, **kw)
+      include HasShortName
+      has_short_name(*args, **kw)
+    end
   end
 end

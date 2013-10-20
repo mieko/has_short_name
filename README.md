@@ -93,10 +93,11 @@ defaults.
 
 ## Contributing
 
-I'd really like contributions to this gem, as I only have a vague set of rules that
-hold for common, Anglo-centric names.  A good set of defaults that hold more globally
-would be nice.  If this gem fucks up your name, or should bail instead of abbreviating
-it, a patch, or even a descriptions of what the proper behaviour is appreciated.
+I'd really like contributions to this gem, as I only have a vague set of rules
+that hold for common, Anglo-centric names.  A good set of defaults that hold
+more globally would be nice.  If this gem fucks up your name, or should bail
+instead of abbreviating it, a patch, or even a descriptions of what the proper
+behaviour is appreciated.
 
 1. Fork it
 2. Create your feature branch (`git checkout -b my-new-feature`)

@@ -97,6 +97,18 @@ module HasShortName
       # Handle `only: :predicate?` argument
       only = only.to_proc
 
+      resolve_conflicts = ->(k, urecs, &cb) do
+        urecs.each do |user, candidates|
+          fail "empty candidate list" if candidates.empty?
+          fail "conflicted key not first" if candidates.first != k
+          if candidates.size == 1
+            cb.([candidates.first, [user, [candidates.first]]])
+          else
+            cb.([candidates[1], [user, candidates[1..-1]]])
+          end
+        end
+      end
+
       define_singleton_method("adjust_#{plural_column}!") do |scope: nil|
         scope ||= self.all
         scope = scope.to_a
@@ -116,7 +128,7 @@ module HasShortName
             if v.size == 1
               adj_map[k] = v
             else
-              send("resolve_#{column}_conflicts", k, v) do |new_key, urec|
+              resolve_conflicts.(k, v) do |new_key, urec|
                 adj_map[new_key] ||= []
                 adj_map[new_key].push(urec)
               end
@@ -138,19 +150,6 @@ module HasShortName
           urecs.each do |urec|
             user = urec.first
             user.update(column => k) if user.send(column) != k
-          end
-        end
-      end
-
-
-      define_singleton_method("resolve_#{column}_conflicts") do |k, urecs, &cb|
-        urecs.each do |user, candidates|
-          fail "empty candidate list" if candidates.empty?
-          fail "conflicted key not first" if candidates.first != k
-          if candidates.size == 1
-            cb.([candidates.first, [user, [candidates.first]]])
-          else
-            cb.([candidates[1], [user, candidates[1..-1]]])
           end
         end
       end

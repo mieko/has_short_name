@@ -1,7 +1,7 @@
 # has\_short\_name
 
-`has_short_name` allows you to abbreviate user's names, hopefully in a culturally sensitive way.
-
+`has_short_name` allows you to abbreviate user's names, hopefully in a
+culturally sensitive way.
 
 ## Installation
 
@@ -45,15 +45,51 @@ User.adjust_short_names!
 
 # Its bailed trying to be clever.
 User.all.pluck(:short_name) => # ['Mike Owens', 'Mike Tyson', 'Mike Mikerson']
+```
 
-# Alternate columns
+## Alternate columns
+You can specify the columns used as a source and destination of a short
+name with `:from` and and `:column`:
+
+```ruby
 class Usuario < BaseTable
   # Use the 'nombre' column to generate 'short_nombre'
   has_short_name from:   :nombre,
                  column: :short_nombre
 end
-
 ```
+
+`has_short_name` can be used on more than one set of [`:from`, `:column`]
+tuples, if you find a reason to do so.
+
+## `:only`
+
+Sometimes you don't want a short name generated, for example, when you have a
+"name" field that can contain a human's name, or a company name.  To prevent
+"Internet Widgets Pty." from being shortened to "Internet" or "Internet W.",
+you'll want something like:
+
+```ruby
+class User
+  has_short_name only: -> {|u| u.human? }
+
+  # Alternatively:
+  # has_short_name only: :human?
+  # Which is converted to the same
+end
+```
+
+In this case, `short_name_candidates` will only return a single `name`, and
+after negotiating short names, it'll always win out, implying
+`short_name = name`.
+
+## Rules
+
+`has_short_name` comes with a list of default rules, which are executed in
+order.  (See `HasShortName::DEFAULT_RULES`).  These currently are anglo-centric,
+but I'd like to expand them.  If you need a particular set of rules,
+`has_short_name` accepts a `:rules` configuration option, which overrides the
+defaults.
 
 ## Contributing
 

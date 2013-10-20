@@ -189,7 +189,7 @@ class HasShortNameTest < MiniTest::Unit::TestCase
     ManOrMachine.create!(name: 'Lt. Commander Data', human: false)
     ManOrMachine.update_all(short_name: nil)
     assert_equal [true, true, false],
-                 ManOrMachine.all.order(:id).pluck(:human)
+                 all(ManOrMachine, :human)
 
     ManOrMachine.adjust_short_names!
 
@@ -214,5 +214,22 @@ class HasShortNameTest < MiniTest::Unit::TestCase
 
     assert_equal ['Mike', 'Bobby'],     all(MultiColumn, :short_name)
     assert_equal ['Miguel', 'Roberto'], all(MultiColumn, :short_nombre)
+  end
+
+  class OnlySymbol < BaseTable
+    has_short_name only: :human?
+
+    def human?
+      !name.match(/\b(robot|android)\b/i)
+    end
+  end
+
+  def test_only_symbols
+    OnlySymbol.create!(name: 'Mike Owens')
+    OnlySymbol.create!(name: 'Data (android)')
+    OnlySymbol.create!(name: 'Data')
+    OnlySymbol.create!(name: 'Bob Bobberson')
+    assert_equal ['Mike', 'Data (android)', 'Data', 'Bob'],
+                 all(OnlySymbol)
   end
 end

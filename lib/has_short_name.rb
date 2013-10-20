@@ -1,32 +1,5 @@
 module HasShortName
 
-  # HasShortName finds candidates by running full names through "rules",
-  # which return nil or the shortened name.  RuleExecutionEnvironment acts
-  # as both the context in which the rules are executed, and it keeps track
-  # of successful matches (non-nil returns) so subsequent rules can act upon
-  # it.
-  class RuleExecutionEnvironment < BasicObject
-    attr_reader :already_matched
-
-    def initialize
-      @already_matched = []
-    end
-
-    def split_name(s)
-      r = s.split(/\s+/)
-      return [r.first, nil, r.last] if r.size == 2
-
-      return [r.first, r[1...(r.size - 1)].join(' '), r.last] if r.size > 3
-      return r
-    end
-
-    def execute_rule(key, name, rule)
-      instance_exec(name, &rule).tap do |r|
-        already_matched.push(key) if r
-      end
-    end
-  end
-
   # For now, these rules are only appropriate for anglo-style names.  Order here
   # is important: they're run top-down
   DEFAULT_RULES = {
@@ -82,6 +55,35 @@ module HasShortName
       name
     end
   }
+
+
+  # HasShortName finds candidates by running full names through "rules",
+  # which return nil or the shortened name.  RuleExecutionEnvironment acts
+  # as both the context in which the rules are executed, and it keeps track
+  # of successful matches (non-nil returns) so subsequent rules can act upon
+  # it.
+  class RuleExecutionEnvironment < BasicObject
+    attr_reader :already_matched
+
+    def initialize
+      @already_matched = []
+    end
+
+    def split_name(s)
+      r = s.split(/\s+/)
+      return [r.first, nil, r.last] if r.size == 2
+
+      return [r.first, r[1...(r.size - 1)].join(' '), r.last] if r.size > 3
+      return r
+    end
+
+    def execute_rule(key, name, rule)
+      instance_exec(name, &rule).tap do |r|
+        already_matched.push(key) if r
+      end
+    end
+  end
+
 
   module ClassMethods
     def has_short_name(only: nil, from: nil, column: nil, rules: nil)

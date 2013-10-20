@@ -4,7 +4,7 @@ module HasShortName
   # is important: they're run top-down
   DEFAULT_RULES = {
     just_first: -> (name) do
-      first, *_ = split_name(name)
+      first, * = split_name(name)
       first
     end,
 
@@ -96,9 +96,9 @@ module HasShortName
       column, from = [column, from].map(&:to_sym)
       plural_column = column.to_s.pluralize
 
-      # Handle `only: :predicate?` argument.  With correct binding via function
-      # invocation.
-      only = ->(sym) { -> { send(sym) } }.(only) if only.is_a?(Symbol)
+      # Handle `only: :predicate?` argument.
+      # With correct binding via function invocation.
+      only = ->(symbol) { -> { send(symbol) } }.(only) if only.is_a?(Symbol)
 
       resolve_conflicts = ->(k, urecs, &cb) do
         urecs.each do |user, candidates|

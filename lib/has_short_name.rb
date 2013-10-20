@@ -180,16 +180,9 @@ module HasShortName
       end
 
 
-      define_method("assign_#{column}") do
-        changed_keys = changed_attributes.keys.map(&:to_sym)
-
-        if !((new_record? && send(column).blank?) ||
-             (! new_record? && changed_keys.include?(from) &&
-              !changed_keys.include?(column)))
-          return
-        end
-
-        scope = self.class.all
+      # Updates regardless
+      define_method("assign_#{column}!") do |scope: nil|
+        scope ||= self.class.all
         send("#{column}_candidates").each do |candidate|
           if (ex = scope.find_by(column => candidate)) && ex != self
             next
@@ -197,6 +190,17 @@ module HasShortName
             send("#{column}=", candidate)
             break
           end
+        end
+      end
+
+
+      # Updates if changed.
+      define_method("assign_#{column}") do |scope: nil|
+        changed_keys = changed_attributes.keys.map(&:to_sym)
+        if ((new_record? && send(column).blank?) ||
+            (! new_record? && changed_keys.include?(from) &&
+              !changed_keys.include?(column)))
+          send("assign_#{column}!", scope: scope)
         end
       end
 

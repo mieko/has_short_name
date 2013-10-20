@@ -1,27 +1,28 @@
 module HasShortName
+
+  class RuleExecutionEnvironment < BasicObject
+    def split_name(s)
+      r = s.split(/\s+/)
+      return [r.first, nil, r.last] if r.size == 2
+
+      return [r.first, r[1...(r.size - 1)].join(' '), r.last] if r.size > 3
+      return r
+    end
+  end
+
   class << self
     attr_accessor :rules
   end
 
-  private
-  def split_name(s)
-    r = s.split(/\s+/)
-    return [r.first, nil, r.last] if r.size == 2
-
-    return [r.first, r[1...(r.size - 1)].join(' '), r.last] if r.size > 3
-    return r
-  end
-  module_function :split_name
-
   public
   self.rules = {
     just_first: -> (name) do
-      first, *_ = HasShortName::split_name(name)
+      first, *_ = split_name(name)
       first
     end,
 
     mc_abbreviation: -> (name) do
-      first, mid, last = HasShortName::split_name(name)
+      first, mid, last = split_name(name)
       if last && last.gsub!(/\A(Mac|Mc|O\')(\S).*/i, '\1\2.')
         "#{first} #{mid} #{last}"
       else
@@ -30,7 +31,7 @@ module HasShortName
     end,
 
     hyphen_abbrev: -> (name) do
-      first, mid, last = HasShortName::split_name(name)
+      first, mid, last = split_name(name)
       if last && last.match(/-/)
         parts = last.split(/\s*-\s*/)
         combined = parts.map{|v| v.chars.first}.join('-') + '.'
@@ -47,13 +48,13 @@ module HasShortName
         return nil
       end
 
-      first, mid, last = HasShortName::split_name(name)
+      first, mid, last = split_name(name)
       return nil if last.nil?
       "#{first} #{last.chars.first}."
     end,
 
     with_middle_names: -> (name) do
-      first, mid, last = HasShortName::split_name(name)
+      first, mid, last = split_name(name)
       if mid
         mids = mid.split(/\s+/)
         midp = mids.map{|v| v.chars.first + '.'} .join(' ')
@@ -144,12 +145,18 @@ module HasShortName
         # candidate.
         return [name] if !only.(self)
 
+        # Rules are executed in a special, blank-ish execution environment
+        # that has a few utility functions
+        execution_environment = RuleExecutionEnvironment.new
+
         # The rules should be in priority order.  As we match,
         # we keep track of what's already matched and let further
         # rules opt out if they want.
         already_matched = []
         after_rules = HasShortName.rules.map do |k, r|
-          candidate = (r.arity == 2 ? r.(name, already_matched) : r.(name))
+          args = (r.arity == 2) ? [name, already_matched] : [name]
+          candidate = execution_environment.instance_exec(*args, &r)
+
           already_matched.push(k) if candidate
           candidate
         end

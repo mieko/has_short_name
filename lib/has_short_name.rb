@@ -1,5 +1,10 @@
 module HasShortName
 
+  # HasShortName finds candidates by running full names through "rules",
+  # which return nil or the shortened name.  RuleExecutionEnvironment acts
+  # as both the context in which the rules are executed, and it keeps track
+  # of successful matches (non-nil returns) so subsequent rules can act upon
+  # it.
   class RuleExecutionEnvironment < BasicObject
     attr_reader :already_matched
 
@@ -14,8 +19,16 @@ module HasShortName
       return [r.first, r[1...(r.size - 1)].join(' '), r.last] if r.size > 3
       return r
     end
+
+    def execute_rule(key, name, rule)
+      instance_exec(name, &rule).tap do |r|
+        already_matched.push(key) if r
+      end
+    end
   end
 
+  # For now, these rules are only appropriate for anglo-style names.  Order here
+  # is important: they're run top-down
   DEFAULT_RULES = {
     just_first: -> (name) do
       first, *_ = split_name(name)
@@ -157,13 +170,9 @@ module HasShortName
         # that has a few utility functions
         execution_environment = RuleExecutionEnvironment.new
 
-        # The rules should be in priority order.  As we match,
-        # we keep track of what's already matched and let further
-        # rules opt out if they want.
-        after_rules = rules.map do |k, r|
-          candidate = execution_environment.instance_exec(name, &r)
-          execution_environment.already_matched.push(k) if candidate
-          candidate
+        # The rules should be in priority order.
+        after_rules = rules.map do |key, rule|
+          execution_environment.execute_rule(key, name, rule)
         end
 
         after_rules.compact!
@@ -198,7 +207,7 @@ module HasShortName
   end
 
   def self.included(cls)
-    cls.send(:extend,  ClassMethods)
+    cls.send(:extend, ClassMethods)
   end
 end
 

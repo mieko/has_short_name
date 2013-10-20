@@ -98,7 +98,7 @@ module HasShortName
             if v.size == 1
               adj_map[k] = v
             else
-              resolve_conflicts(k, v) do |new_key, urec|
+              send("resolve_#{column}_conflicts", k, v) do |new_key, urec|
                 adj_map[new_key] ||= []
                 adj_map[new_key].push(urec)
               end
@@ -125,7 +125,7 @@ module HasShortName
       end
 
 
-      define_singleton_method(:resolve_conflicts) do |k, urecs, &cb|
+      define_singleton_method("resolve_#{column}_conflicts") do |k, urecs, &cb|
         urecs.each do |user, candidates|
           fail "empty candidate list" if candidates.empty?
           fail "conflicted key not first" if candidates.first != k

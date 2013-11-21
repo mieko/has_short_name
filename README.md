@@ -7,7 +7,7 @@ culturally sensitive way.
 
 Add this line to your application's Gemfile:
 
-    gem 'has_short_name'
+    gem 'has_short_name', github: 'mieko/has_short_name'
 
 And then execute:
 

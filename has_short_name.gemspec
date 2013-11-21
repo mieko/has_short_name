@@ -3,7 +3,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
   spec.name          = "has_short_name"
-  spec.version       = '0.0.2'
+  spec.version       = '0.0.5'
   spec.authors       = ["Mike Owens"]
   spec.email         = ["mike@filespanker.com"]
   spec.description   = "ActiveRecord extension that generates abbreviated short names from names"

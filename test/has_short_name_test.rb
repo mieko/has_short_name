@@ -10,31 +10,6 @@ ActiveRecord::Base.establish_connection adapter:  'sqlite3',
 class BaseTable < ActiveRecord::Base
 end
 
-class NoMixin < BaseTable
-end
-
-class WithMixin < BaseTable
-  has_short_name
-end
-
-class User < BaseTable
-  has_short_name
-end
-
-class ManOrMachine < BaseTable
-  has_short_name only: ->{ human }
-end
-
-class Usuario < BaseTable
-  has_short_name from: :nombre,
-                 column: :short_nombre
-end
-
-class MultiColumn < BaseTable
-  has_short_name
-  has_short_name from: :nombre, column: :short_nombre
-end
-
 class HasShortNameTest < MiniTest::Unit::TestCase
   def setup
     capture_io do
@@ -64,6 +39,13 @@ class HasShortNameTest < MiniTest::Unit::TestCase
     model.all.order(:id).pluck(attrib)
   end
 
+  class NoMixin < BaseTable
+  end
+
+  class WithMixin < BaseTable
+    has_short_name
+  end
+
   def test_hook_was_included
     # On AR models which has_short_name wasn't called, we shouldn't
     # have the ClassMethods mixins
@@ -74,6 +56,11 @@ class HasShortNameTest < MiniTest::Unit::TestCase
     # It should still have the bootstrap
     assert_kind_of HasShortName::ClassMethods, WithMixin
   end
+
+  class User < BaseTable
+    has_short_name
+  end
+
 
   def test_basic_functionality
     u = User.create!(name: 'Mike Owens')
@@ -171,6 +158,11 @@ class HasShortNameTest < MiniTest::Unit::TestCase
     assert_equal 'Mike', u.short_name
   end
 
+
+  class ManOrMachine < BaseTable
+    has_short_name only: ->{ human }
+  end
+
   def test_only_predicate
     u = ManOrMachine.create!(name: 'Mike Owens')
     assert_equal 'Mike', u.short_name
@@ -197,11 +189,23 @@ class HasShortNameTest < MiniTest::Unit::TestCase
     assert_equal ['Mike', 'Leah', 'Lt. Commander Data'], all(ManOrMachine)
   end
 
+
+  class Usuario < BaseTable
+    has_short_name from: :nombre,
+                   column: :short_nombre
+  end
+
   def test_alternate_column_names
     Usuario.create!(nombre: 'Miguel Owens')
     Usuario.create!(nombre: 'Miguel Trollface')
     Usuario.adjust_short_nombres!
     assert_equal ['Miguel O.', 'Miguel T.'], all(Usuario, :short_nombre)
+  end
+
+
+  class MultiColumn < BaseTable
+    has_short_name
+    has_short_name from: :nombre, column: :short_nombre
   end
 
   # These should work independently.

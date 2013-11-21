@@ -86,7 +86,8 @@ module HasShortName
 
 
   module ClassMethods
-    def has_short_name(only: nil, from: nil, column: nil, rules: nil)
+    def has_short_name(only: nil, from: nil, column: nil, rules: nil,
+                       auto_adjust: false)
       only   ||= -> { true }
       column ||= :short_name
       from   ||= :name
@@ -205,6 +206,13 @@ module HasShortName
       end
 
       before_validation "assign_#{column}".to_sym
+
+      if auto_adjust
+        after_save -> do
+          self.class.send("adjust_#{plural_column}!".to_sym)
+        end
+      end
+
     end
   end
 

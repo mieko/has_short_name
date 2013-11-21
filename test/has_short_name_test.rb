@@ -232,4 +232,15 @@ class HasShortNameTest < MiniTest::Unit::TestCase
     assert_equal ['Mike', 'Data (android)', 'Data', 'Bob'],
                  all(OnlySymbol)
   end
+
+
+  class WithAutoAdjust < BaseTable
+    has_short_name auto_adjust: true
+  end
+
+  def test_auto_adjust
+    WithAutoAdjust.create!(name: 'Mike Owens')
+    WithAutoAdjust.create!(name: 'Mike Snipes')
+    assert_equal ['Mike O.', 'Mike S.'], all(WithAutoAdjust)
+  end
 end

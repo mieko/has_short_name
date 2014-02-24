@@ -99,7 +99,9 @@ module HasShortName
 
       # Handle `only: :predicate?` argument.
       # With correct binding via function invocation.
-      only = ->(symbol) { -> { send(symbol) } }.(only) if only.is_a?(Symbol)
+      if only.is_a?(Symbol)
+        only = ->(symbol) { -> { send(symbol) } }.(only)
+      end
 
       resolve_conflicts = ->(k, urecs, &cb) do
         urecs.each do |user, candidates|
@@ -161,9 +163,14 @@ module HasShortName
 
       define_method("#{column}_candidates") do
         name = send(from)
+        existing_short_name = send(column)
+
         # For models that fail the predicate, the name is the only
         # candidate.
-        return [name] unless instance_exec(&only)
+        unless instance_exec(&only)
+          return [existing_short_name] unless existing_short_name.blank?
+          return [name]
+        end
 
         # Rules are executed in a special, blank-ish execution environment
         # that has a few utility functions

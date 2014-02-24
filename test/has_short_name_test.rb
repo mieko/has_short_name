@@ -19,6 +19,7 @@ class HasShortNameTest < MiniTest::Unit::TestCase
           t.column :name, :string
           t.column :short_name, :string
           t.column :human, :boolean, null: false, default: true
+          t.column :short_name_assigned, :boolean, null: false, default: false
 
           t.column :nombre, :string
           t.column :short_nombre, :string
@@ -171,8 +172,33 @@ class HasShortNameTest < MiniTest::Unit::TestCase
     assert_equal 'Lt. Commander Data', u2.short_name
 
     # Make sure it's used properly in batch
-    User.adjust_short_names!
+    ManOrMachine.adjust_short_names!
     assert_equal ['Mike', 'Lt. Commander Data'], all(ManOrMachine)
+  end
+
+  class ManOrMachineWithPredicate < BaseTable
+    has_short_name only: :assign_short_name?
+
+    def assign_short_name?
+      human && !short_name_assigned
+    end
+  end
+
+  def test_only_predicate_collision
+    u = ManOrMachineWithPredicate.create!(name: 'Mike Owens')
+    u2 = ManOrMachineWithPredicate.create!(name: 'Mike Snipes',
+                              short_name: 'Snipey',
+                              short_name_assigned: true)
+    assert_equal ['Snipey'], u2.short_name_candidates
+
+    ManOrMachineWithPredicate.adjust_short_names!
+
+    u = ManOrMachineWithPredicate.find_by(name: 'Mike Owens')
+    u2 = ManOrMachineWithPredicate.find_by(name: 'Mike Snipes')
+
+
+    assert_equal 'Mike', u.short_name
+    assert_equal 'Snipey', u2.short_name
   end
 
   def test_blank_only_adjust

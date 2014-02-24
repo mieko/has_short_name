@@ -43,8 +43,7 @@ m2.short_name # => "Mike T."
 m3 = User.create(name: 'Mike Mikerson')
 User.adjust_short_names!
 
-# Its bailed trying to be clever.
-User.all.pluck(:short_name) => # ['Mike Owens', 'Mike Tyson', 'Mike Mikerson']
+User.all.pluck(:short_name) => # ['Mike O.', 'Mike T.', 'Mike M.']
 ```
 
 ## Alternate columns
@@ -81,7 +80,22 @@ end
 
 In this case, `short_name_candidates` will only return a single `name`, and
 after negotiating short names, it'll always win out, implying
-`short_name = name`.
+`short_name = name`.  If the user already has a short name assigned, that will
+be the only candidate returned, so the following is pretty useful:
+
+```ruby
+class User
+  has_short_name only: :should_assign_short_name?
+
+private
+  def should_assign_short_name
+    # short_name_explicitly_assigned could be a column on the
+    # user table, and set to true if a user explicitly chooses
+    # their short name
+    human && !short_name_explicitly_assigned
+  end
+end
+```
 
 ## Rules
 

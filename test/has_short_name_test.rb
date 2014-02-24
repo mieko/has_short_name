@@ -68,6 +68,30 @@ class HasShortNameTest < MiniTest::Unit::TestCase
     assert_equal 'Mike', u.short_name
   end
 
+  def test_readme
+    m1 = User.create(name: 'Mike Owens')
+
+    # m1 is unique on first name
+    m1.short_name # => "Mike"
+
+    m2 = User.create(name: 'Mike Tyson')
+
+    # Notices that "Mike" is no longer unique
+    m2.short_name # => "Mike T."
+
+    # To ease confusion, we'll adjust all "Mikes" to the same level
+    User.adjust_short_names!
+    m1.short_name # => "Mike O."
+    m2.short_name # => "Mike T."
+
+    # Let's make it annoying
+    m3 = User.create(name: 'Mike Mikerson')
+    User.adjust_short_names!
+
+    assert_equal ['Mike O.', 'Mike T.', 'Mike M.'],
+                 User.all.pluck(:short_name)
+  end
+
   def test_change_name
     u = User.create!(name: 'Mike Owens')
     assert_equal 'Mike', u.short_name

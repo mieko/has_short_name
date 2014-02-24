@@ -85,6 +85,9 @@ module HasShortName
   end
 
 
+  # This is written in a lame, meta-programming style so it'll work with
+  # multiple configurations in a single model.  has_short_name has to generate
+  # methods with different configurations, and a closure does that nicely.
   module ClassMethods
     def has_short_name(only: nil, from: nil, column: nil, rules: nil,
                        auto_adjust: false)
@@ -215,7 +218,7 @@ module HasShortName
       before_validation "assign_#{column}".to_sym
 
       if auto_adjust
-        after_save -> do
+        after_save do
           self.class.send("adjust_#{plural_column}!".to_sym)
         end
       end

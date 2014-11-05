@@ -3,10 +3,11 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
   spec.name          = "has_short_name"
-  spec.version       = '0.1.0'
+  spec.version       = '0.2.0'
   spec.authors       = ["Mike Owens"]
   spec.email         = ["mike@filespanker.com"]
-  spec.description   = "ActiveRecord extension that generates abbreviated short names from names"
+  spec.description   = "ActiveRecord extension that generates abbreviated "
+                       "short names from people's names"
   spec.summary       = "Generate abbreviated names from full names"
   spec.homepage      = "https://github.com/mieko/has_short_name"
   spec.license       = "MIT"
@@ -22,5 +23,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "sqlite3"
 
   spec.add_dependency "activerecord", "~> 4.0"
-  spec.required_ruby_version = "> 1.9.3"
+  spec.required_ruby_version = ">= 2.1"
 end

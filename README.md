@@ -100,7 +100,7 @@ end
 ## Rules
 
 `has_short_name` comes with a list of default rules, which are executed in
-order.  (See `HasShortName::DEFAULT_RULES`).  These currently are anglo-centric,
+order.  (See `HasShortName::DefaultRuleSet`).  These currently are anglo-centric,
 but I'd like to expand them.  If you need a particular set of rules,
 `has_short_name` accepts a `:rules` configuration option, which overrides the
 defaults.

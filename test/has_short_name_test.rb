@@ -1,6 +1,5 @@
-require 'minitest/unit'
-require 'minitest/pride'
 require 'minitest/autorun'
+require 'minitest/pride'
 require 'active_record'
 require 'has_short_name'
 
@@ -10,7 +9,7 @@ ActiveRecord::Base.establish_connection adapter:  'sqlite3',
 class BaseTable < ActiveRecord::Base
 end
 
-class HasShortNameTest < MiniTest::Unit::TestCase
+class HasShortNameTest < MiniTest::Test
   def setup
     capture_io do
       ActiveRecord::Schema.define(version: 1) do

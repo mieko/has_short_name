@@ -1,90 +1,10 @@
+require 'name_finder'
+require 'rule_set'
+require 'default_rule_set'
+require 'rule_execution_environment'
+
 module HasShortName
-
-  # For now, these rules are only appropriate for anglo-style names.  Order here
-  # is important: they're run top-down
-  DEFAULT_RULES = {
-    just_first: -> (name) do
-      first, * = split_name(name)
-      first
-    end,
-
-    mc_abbreviation: -> (name) do
-      first, mid, last = split_name(name)
-      if last && last.gsub!(/\A(Mac|Mc|O\')(\S).*/i, '\1\2.')
-        "#{first} #{mid} #{last}"
-      else
-        nil
-      end
-    end,
-
-    hyphen_abbrev: -> (name) do
-      first, mid, last = split_name(name)
-      if last && last.match(/-/)
-        parts = last.split(/\s*-\s*/)
-        combined = parts.map{|v| v.chars.first}.join('-') + '.'
-        "#{first} #{mid} #{combined}"
-      else
-        nil
-      end
-    end,
-
-    first_and_last_initial: -> (name) do
-      # This isn't an option if we've already got a McName, because it's
-      # pretty much a special case.
-      if (already_matched & [:mc_abbreviation, :hyphen_abbrev]) != []
-        return nil
-      end
-
-      first, mid, last = split_name(name)
-      return nil if last.nil?
-      "#{first} #{last.chars.first}."
-    end,
-
-    with_middle_names: -> (name) do
-      first, mid, last = split_name(name)
-      if mid
-        mids = mid.split(/\s+/)
-        midp = mids.map{|v| v.chars.first + '.'} .join(' ')
-        "#{first} #{midp} #{last}"
-      else
-        nil
-      end
-    end,
-
-    no_op: -> (name) do
-      name
-    end
-  }
-
-
-  # HasShortName finds candidates by running full names through "rules",
-  # which return nil or the shortened name.  RuleExecutionEnvironment acts
-  # as both the context in which the rules are executed, and it keeps track
-  # of successful matches (non-nil returns) so subsequent rules can act upon
-  # it.
-  class RuleExecutionEnvironment < BasicObject
-    attr_reader :already_matched
-
-    def initialize
-      @already_matched = []
-    end
-
-    def split_name(s)
-      r = s.split(/\s+/)
-      return [r.first, nil, r.last] if r.size == 2
-
-      return [r.first, r[1...(r.size - 1)].join(' '), r.last] if r.size > 3
-      return r
-    end
-
-    def execute_rule(key, name, rule)
-      instance_exec(name, &rule).tap do |r|
-        already_matched.push(key) if r
-      end
-    end
-  end
-
-
+  
   # This is written in a lame, meta-programming style so it'll work with
   # multiple configurations in a single model.  has_short_name has to generate
   # methods with different configurations, and a closure does that nicely.
@@ -94,7 +14,7 @@ module HasShortName
       only   ||= -> { true }
       column ||= :short_name
       from   ||= :name
-      rules  ||= HasShortName::DEFAULT_RULES
+      rules  ||= HasShortName::DefaultRuleSet.new
 
       # Allow passing in strings
       column, from = [column, from].map(&:to_sym)
@@ -179,9 +99,14 @@ module HasShortName
         # that has a few utility functions
         execution_environment = RuleExecutionEnvironment.new
 
+        after_rules = []
         # The rules should be in priority order.
-        after_rules = rules.map do |key, rule|
-          execution_environment.execute_rule(key, name, rule)
+        rules.executing(execution_environment) do
+          after_rules = rules.map do |key, rule|
+            rule.call(name).tap do |result|
+              execution_environment.already_matched.push(key) if result
+            end
+          end
         end
 
         after_rules.compact!
@@ -226,8 +151,10 @@ module HasShortName
     end
   end
 
-  def self.included(cls)
-    cls.send(:extend, ClassMethods)
+  def self.included(klass)
+    klass.instance_eval do
+      extend ClassMethods
+    end
   end
 end
 
